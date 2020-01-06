@@ -13,8 +13,18 @@ http://www.freertos.org/
 
 The default configuration is in `FreeRTOSConfig_Default.h`.
 
-You can specify your own by having an include file named `Teensy4FreeRTOSConfig.h` (in your project's `include` folder if you are using this as a PlatformIO lib),
+You can specify your own by having an include file named `Teensy4FreeRTOSConfig.h`,
 or you can add/replace to the default one by having an include file named `Teensy4FreeRTOSConfig_addition.h`.
+
+### For PlatformIO users
+
+The way PlatformIO works makes it impossible to load a configuration header in a system-level library.
+If you installed this library using the library manager, your config files will not be read as PlatformIO isolates the library from your project files when building it.
+
+To alleviate this problem, you can clone this repository in the `lib` folder of your project and add the config files in your `include` folder.
+PlatformIO will blindly search for includes in `../../include/` as per project configuration.
+
+When the PlatformIO team implements a way to add per-project configuration files, I will update this method.
 
 ## How-to
 
