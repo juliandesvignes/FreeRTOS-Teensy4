@@ -13,8 +13,8 @@ http://www.freertos.org/
 
 The default configuration is in `FreeRTOSConfig_Default.h`.
 
-You can specify your own by having an include file named `Teensy4FreeRTOSConfig.h`,
-or you can add to the default one by having an include file named `Teensy4FreeRTOSConfig_addition.h`.
+You can specify your own by having an include file named `Teensy4FreeRTOSConfig.h` (in your project's `include` folder if you are using this as a PlatformIO lib),
+or you can add/replace to the default one by having an include file named `Teensy4FreeRTOSConfig_addition.h`.
 
 ## How-to
 

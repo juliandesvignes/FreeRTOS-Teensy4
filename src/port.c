@@ -540,9 +540,24 @@ void xPortSysTickHandler( void )
 }
 
 extern void systick_isr(void);
-void freertos_systick_isr(void)
+__attribute__((__hot__)) void freertos_systick_isr(void)
 {
-	systick_isr();
+	if(configTICK_RATE_HZ >= 1000) { // FreeRTOS is too fast
+		static uint8_t sub_tick_cnt = 0;
+		sub_tick_cnt++;
+		if(configTICK_RATE_HZ/sub_tick_cnt <= 1000) {
+			systick_isr();
+			sub_tick_cnt = 0;
+		} 
+	} else { // FreeRTOS is too slow
+	 	static uint32_t r = 0;
+		r += 1000000 / configTICK_RATE_HZ;
+		for(int16_t i=r/1000 ; i > 0 ; i--) {
+			systick_isr();
+			r -= 1000;
+		}
+	}
+	
 	xPortSysTickHandler();
 }
 
@@ -716,11 +731,6 @@ void freertos_systick_isr(void)
 #endif /* #if configUSE_TICKLESS_IDLE */
 /*-----------------------------------------------------------*/
 
-//extern void (* _VectorsRam[NVIC_NUM_INTERRUPTS+16])(void);
-
-extern volatile uint32_t systick_cycle_count;
-
-
 /*
  * Setup the systick timer to generate the tick interrupts at the required
  * frequency.
@@ -729,6 +739,7 @@ void vPortSetupTimerInterrupt( void )
 {
 	portFreeRTOSSchedulerStarted = 1;
 	portDISABLE_INTERRUPTS();
+	SYST_RVR = (100000 / configTICK_RATE_HZ) - 1;
 	_VectorsRam[15] = freertos_systick_isr;
 	_VectorsRam[14] = xPortPendSVHandler;
 	_VectorsRam[11] = vPortSVCHandler;
