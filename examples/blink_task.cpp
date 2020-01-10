@@ -16,8 +16,12 @@ SemaphoreHandle_t sem;
 static void Thread1(void* arg) {
   while (1) {
 
+    Serial.println("Thread 1 : Waiting on Thread 2 to turn LED OFF");
+
     // Wait for signal from thread 2.
     xSemaphoreTake(sem, portMAX_DELAY);
+
+    Serial.println("Thread 1 : Turning LED OFF");
 
     // Turn LED off.
     digitalWrite(LED_PIN, LOW);
@@ -36,8 +40,12 @@ static void Thread2(void* arg) {
     // Turn LED on.
     digitalWrite(LED_PIN, HIGH);
 
+    Serial.println("Thread 2 : Turning LED ON");
+
     // Sleep for 200 milliseconds.
     vTaskDelay((200L * configTICK_RATE_HZ) / 1000L);
+
+    Serial.println("Thread 2 : Asking Thread 1 to turn LED OFF");
 
     // Signal thread 1 to turn LED off.
     xSemaphoreGive(sem);
@@ -63,9 +71,12 @@ void setup() {
 
   // check for creation errors
   if (sem== NULL || s1 != pdPASS || s2 != pdPASS ) {
-    Serial.println(F("Creation problem"));
+    Serial.println("Creation problem");
     while(1);
   }
+
+  Serial.println("Starting the scheduler !");
+
   // start scheduler
   vTaskStartScheduler();
   Serial.println("Insufficient RAM");
