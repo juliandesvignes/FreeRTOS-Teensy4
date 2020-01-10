@@ -1,5 +1,13 @@
 /*
  * Example to demonstrate thread definition, semaphores, and thread sleep.
+ * 
+ * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+ * Due to a recent bug with unaligned memory access, you need to compile with either `-DTEENSY_OPT_SMALLEST_CODE` or `-DTEENSY_OPT_DEBUG`.
+ * If you are using Arduino IDE, simply select `Smallest Code` in `Tools -> Optimize`.
+ * If you are using PlatformIO, add `build_flags = -DTEENSY_OPT_SMALLEST_CODE` under `[env]` in your `platformio.ini`
+ * This will be fixed in a future version.
+ * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+ * 
  */
 #include <FreeRTOS_TEENSY4.h>
 
