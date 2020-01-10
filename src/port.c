@@ -128,7 +128,6 @@ void vPortSetupTimerInterrupt( void );
  * Exception handlers.
  */
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
-void xPortSysTickHandler( void );
 void vPortSVCHandler( void ) __attribute__ (( naked ));
 
 /*
@@ -140,6 +139,12 @@ static void prvPortStartFirstTask( void ) __attribute__ (( naked ));
  * Function to enable the VFP.
  */
 static void vPortEnableVFP( void ) __attribute__ (( naked ));
+
+/*
+ * Function to disable the VFP.
+ */
+static void vPortDisableVFP( void ) __attribute__ (( naked ));
+
 
 /*
  * Used to catch tasks that attempt to return from their implementing function.
@@ -385,11 +390,12 @@ BaseType_t xPortStartScheduler( void )
 	/* Initialise the critical nesting count ready for the first task. */
 	uxCriticalNesting = 0;
 
-	/* Ensure the VFP is enabled - it should be anyway. */
-	vPortEnableVFP();
+	vPortDisableVFP();
 
 	/* Lazy save always. */
 	*( portFPCCR ) |= portASPEN_AND_LSPEN_BITS;
+
+	vPortEnableVFP();
 
 #if INCLUDE_vTaskEndScheduler
     if(setjmp(xJumpBuf) != 0 ) {
@@ -419,6 +425,21 @@ BaseType_t xPortStartScheduler( void )
 
 	/* Should not get here! */
 	return 0;
+}
+
+static void vPortDisableVFP( void ){
+	__asm volatile(
+		" mov r0, #0            \n" /* Clear the bit that indicates the FPU is in use*/
+        " msr control, r0       "
+	);
+
+	( * ( ( volatile uint32_t * ) 0xE000ED88 ) ) &= 0xff0fffff;
+
+	__asm volatile(
+		" dsb						\n"
+		" isb 						\n"
+		" bx r14					"
+	);
 }
 
 /*-----------------------------------------------------------*/
@@ -463,7 +484,7 @@ void vPortExitCritical( void )
 	}
 }
 /*-----------------------------------------------------------*/
-
+extern void pendablesrvreq_isr();
 void xPortPendSVHandler( void )
 {
 	__asm volatile
@@ -501,6 +522,7 @@ void xPortPendSVHandler( void )
 	"	vldmiaeq r0!, {s16-s31}				\n"
 	"										\n"
 	"	msr psp, r0							\n"
+	"	dsb									\n"
 	"	isb									\n"
 	"										\n"
 	#ifdef WORKAROUND_PMU_CM001 /* XMC4000 specific errata workaround. */
@@ -516,16 +538,29 @@ void xPortPendSVHandler( void )
 	"pxCurrentTCBConst: .word pxCurrentTCB	\n"
 	::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
 	);
+	pendablesrvreq_isr();
 }
 /*-----------------------------------------------------------*/
 
-void xPortSysTickHandler( void )
+extern void systick_isr(void);
+__attribute__((__hot__)) void freertos_systick_isr(void)
 {
+	static uint8_t sub_tick_cnt = 0;
+	sub_tick_cnt++;
 
-	/* The SysTick runs at the lowest interrupt priority, so when this interrupt
-	executes all interrupts must be unmasked.  There is therefore no need to
-	save and then restore the interrupt mask value as its value is already
-	known. */
+	if(configTICK_RATE_HZ >= 1000) { // FreeRTOS is too fast
+		if(configTICK_RATE_HZ/sub_tick_cnt <= 1000) {
+			systick_isr();
+			sub_tick_cnt = 0;
+		} 
+	} else { // FreeRTOS is too slow
+		systick_isr();
+		if(1000/sub_tick_cnt > configTICK_RATE_HZ) {
+			return;
+		}
+		sub_tick_cnt = 0;
+	}
+
 	portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		/* Increment the RTOS tick. */
@@ -537,28 +572,7 @@ void xPortSysTickHandler( void )
 		}
 	}
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
 
-extern void systick_isr(void);
-__attribute__((__hot__)) void freertos_systick_isr(void)
-{
-	if(configTICK_RATE_HZ >= 1000) { // FreeRTOS is too fast
-		static uint8_t sub_tick_cnt = 0;
-		sub_tick_cnt++;
-		if(configTICK_RATE_HZ/sub_tick_cnt <= 1000) {
-			systick_isr();
-			sub_tick_cnt = 0;
-		} 
-	} else { // FreeRTOS is too slow
-	 	static uint32_t r = 0;
-		r += 1000000 / configTICK_RATE_HZ;
-		for(int16_t i=r/1000 ; i > 0 ; i--) {
-			systick_isr();
-			r -= 1000;
-		}
-	}
-	
-	xPortSysTickHandler();
 }
 
 
@@ -739,7 +753,7 @@ void vPortSetupTimerInterrupt( void )
 {
 	portFreeRTOSSchedulerStarted = 1;
 	portDISABLE_INTERRUPTS();
-	SYST_RVR = (100000 / configTICK_RATE_HZ) - 1;
+	if(configTICK_RATE_HZ >= 1000) SYST_RVR = (100000 / configTICK_RATE_HZ) - 1;
 	_VectorsRam[15] = freertos_systick_isr;
 	_VectorsRam[14] = xPortPendSVHandler;
 	_VectorsRam[11] = vPortSVCHandler;
@@ -821,5 +835,4 @@ static void vPortEnableVFP( void )
 	}
 
 #endif /* configASSERT_DEFINED */
-
 

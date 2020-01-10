@@ -9,6 +9,16 @@ The Arduino systick-ing is kept running after starting the scheduler, so millis(
 The documentation for FreeRTOS is located here:
 http://www.freertos.org/
 
+## PLEASE READ
+
+*Due to a recent bug with unaligned memory access (see [issue#2](https://github.com/discord-intech/FreeRTOS-Teensy4/issues/2)), you need to compile with either `-DTEENSY_OPT_SMALLEST_CODE` or `-DTEENSY_OPT_DEBUG`.*
+
+*If you are using Arduino IDE, simply select `Smallest Code` in `Tools -> Optimize`.*
+
+*If you are using PlatformIO, add `build_flags = -DTEENSY_OPT_SMALLEST_CODE` under `[env]` in your `platformio.ini`*
+
+*This will be fixed in a future version.*
+
 ## FreeRTOS configuration
 
 The default configuration is in `FreeRTOSConfig_Default.h`.
