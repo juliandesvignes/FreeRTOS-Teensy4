@@ -35,9 +35,6 @@
 #include <Arduino.h>
 #include <imxrt.h>
 
-
-void freertos_systick_isr(void);
-
 extern uint32_t SystemCoreClock; /* in kinetis SDK, this contains the system core clock speed */
 
 #ifndef __VFP_FP__
@@ -129,6 +126,7 @@ void vPortSetupTimerInterrupt( void );
  */
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
 void vPortSVCHandler( void ) __attribute__ (( naked ));
+void freertos_systick_isr(void) __attribute__((__hot__, __optimize__(3)));
 
 /*
  * Start first task is a separate function so it can be tested in isolation.
@@ -543,7 +541,7 @@ void xPortPendSVHandler( void )
 /*-----------------------------------------------------------*/
 
 extern void systick_isr(void);
-__attribute__((__hot__)) void freertos_systick_isr(void)
+void freertos_systick_isr(void)
 {
 	static uint8_t sub_tick_cnt = 0;
 	sub_tick_cnt++;
@@ -554,10 +552,20 @@ __attribute__((__hot__)) void freertos_systick_isr(void)
 			sub_tick_cnt = 0;
 		} 
 	} else { // FreeRTOS is too slow
-		systick_isr();
-		if(1000/sub_tick_cnt > configTICK_RATE_HZ) {
-			return;
-		}
+		if(1000 % configTICK_RATE_HZ) { // Using the configTICK_RATE_HZ Hz systick
+			static uint32_t r = 0;
+			r += 1000 / configTICK_RATE_HZ;
+			for(uint32_t i=r ; i > 0 ; i--) {
+				systick_isr();
+				r -= 1;
+			}
+		} else { //In this case, we are using the 1kHz systick
+			systick_isr();
+			if(1000/sub_tick_cnt > configTICK_RATE_HZ) { 
+				return;
+			}
+		} 
+		
 		sub_tick_cnt = 0;
 	}
 
@@ -753,7 +761,11 @@ void vPortSetupTimerInterrupt( void )
 {
 	portFreeRTOSSchedulerStarted = 1;
 	portDISABLE_INTERRUPTS();
-	if(configTICK_RATE_HZ >= 1000) SYST_RVR = (100000 / configTICK_RATE_HZ) - 1;
+
+	if((configTICK_RATE_HZ >= 1000) || (1000 % configTICK_RATE_HZ)) { // 1000 cannot be divided by configTICK_RATE_HZ, we cannnot use the standard 1kHz systick for the FreeRTOS tick
+		SYST_RVR = (100000 / configTICK_RATE_HZ) - 1;
+	}
+
 	_VectorsRam[15] = freertos_systick_isr;
 	_VectorsRam[14] = xPortPendSVHandler;
 	_VectorsRam[11] = vPortSVCHandler;
