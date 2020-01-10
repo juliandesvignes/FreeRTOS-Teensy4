@@ -485,6 +485,7 @@ void vPortExitCritical( void )
 extern void pendablesrvreq_isr();
 void xPortPendSVHandler( void )
 {
+	//pendablesrvreq_isr();
 	__asm volatile
 	(
 	"	mrs r0, psp							\n"
@@ -536,7 +537,6 @@ void xPortPendSVHandler( void )
 	"pxCurrentTCBConst: .word pxCurrentTCB	\n"
 	::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
 	);
-	pendablesrvreq_isr();
 }
 /*-----------------------------------------------------------*/
 
