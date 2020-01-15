@@ -1,6 +1,6 @@
 {
     "name": "FreeRTOS-Teensy4",
-    "version": "10.0.3",
+    "version": "10.0.4",
     "keywords": "rtos, freertos, teensy4",
     "description": "Teensy 4.0 FreeRTOS Library for Teensyduino",
     "repository":
@@ -16,6 +16,13 @@
         "maintainer": true
       }
     ],
+    "export": {
+        "include":
+        [
+            "src/*",
+            "examples/*"
+        ]
+    },
     "frameworks": "arduino",
     "platforms": "teensy",
     "build":
