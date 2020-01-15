@@ -9,11 +9,12 @@
 #error Teensy 4.0 required
 #else  // __arm__
 
-#if defined(TEENSY_OPT_FASTER) || defined(TEENSY_OPT_FAST) || defined(TEENSY_OPT_FASTEST) || defined(TEENSY_OPT_FASTER_LTO) || defined(TEENSY_OPT_FAST_LTO) || defined(TEENSY_OPT_FASTEST_LTO) || defined(TEENSY_OPT_SMALLEST_CODE) || !defined(TEENSY_OPT_DEBUG)
-#error Due to a bug with unaligned memory access, please compile your firmware with -DTEENSY_OPT_DEBUG . PLEASE CHECK THE README ! This will be fixed in a future version.
+#if defined(TEENSY_OPT_FASTER) || defined(TEENSY_OPT_FAST) || defined(TEENSY_OPT_FASTEST) || defined(TEENSY_OPT_FASTER_LTO) || defined(TEENSY_OPT_FAST_LTO) || defined(TEENSY_OPT_FASTEST_LTO) || (!defined(TEENSY_OPT_SMALLEST_CODE) && !defined(TEENSY_OPT_DEBUG))
+#error Due to a bug with unaligned memory access, please compile your firmware with -DTEENSY_OPT_DEBUG or -DTEENSY_OPT_SMALLEST_CODE . PLEASE CHECK THE README ! This will be fixed in a future version.
 #endif
 
 #include <Arduino.h>
+#include <usb_serial.h>
 
 #include "FreeRTOS.h"
 #include "task.h"

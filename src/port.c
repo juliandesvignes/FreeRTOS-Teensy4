@@ -315,6 +315,8 @@ BaseType_t xPortStartScheduler( void )
 	configASSERT( portCPUID != portCORTEX_M7_r0p1_ID );
 	configASSERT( portCPUID != portCORTEX_M7_r0p0_ID );
 
+	delay(100);
+
 	#if( configASSERT_DEFINED == 1 )
 	{
 		volatile uint32_t ulOriginalPriority;

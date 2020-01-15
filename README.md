@@ -11,11 +11,11 @@ http://www.freertos.org/
 
 ## PLEASE READ
 
-*Due to a recent bug with unaligned memory access (see [issue#2](https://github.com/discord-intech/FreeRTOS-Teensy4/issues/2)), you need to compile with `-DTEENSY_OPT_DEBUG`.*
+*Due to a recent bug with unaligned memory access (see [issue#2](https://github.com/discord-intech/FreeRTOS-Teensy4/issues/2)), you need to compile with `-DTEENSY_OPT_DEBUG` or `-DTEENSY_OPT_SMALLEST_CODE` (has `-O2 optimizations`).*
 
-*If you are using Arduino IDE, simply select `Debug` in `Tools -> Optimize`.*
+*If you are using Arduino IDE, simply select `Smallest Code` in `Tools -> Optimize`.*
 
-*If you are using PlatformIO, add `build_flags = -DTEENSY_OPT_DEBUG` under `[env]` in your `platformio.ini`*
+*If you are using PlatformIO, add `build_flags = -DTEENSY_OPT_SMALLEST_CODE` under `[env]` in your `platformio.ini`*
 
 *This will be fixed in a future version.*
 
