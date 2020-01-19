@@ -315,6 +315,8 @@ BaseType_t xPortStartScheduler( void )
 	configASSERT( portCPUID != portCORTEX_M7_r0p1_ID );
 	configASSERT( portCPUID != portCORTEX_M7_r0p0_ID );
 
+	configASSERT( configTICK_RATE_HZ > 0 );
+
 	delay(100);
 
 	#if( configASSERT_DEFINED == 1 )
@@ -410,7 +412,6 @@ BaseType_t xPortStartScheduler( void )
     }
 #endif
 
-	
 	/* Start the first task. */
 	prvPortStartFirstTask();
 
@@ -549,7 +550,7 @@ void freertos_systick_isr(void)
 	sub_tick_cnt++;
 
 	if(configTICK_RATE_HZ >= 1000) { // FreeRTOS is too fast
-		if(configTICK_RATE_HZ/sub_tick_cnt <= 1000) {
+		if(sub_tick_cnt >= configTICK_RATE_HZ/1000) {
 			systick_isr();
 			sub_tick_cnt = 0;
 		} 
@@ -563,7 +564,7 @@ void freertos_systick_isr(void)
 			}
 		} else { //In this case, we are using the 1kHz systick
 			systick_isr();
-			if(1000/sub_tick_cnt > configTICK_RATE_HZ) { 
+			if(sub_tick_cnt < 1000/configTICK_RATE_HZ) { 
 				return;
 			}
 		} 
