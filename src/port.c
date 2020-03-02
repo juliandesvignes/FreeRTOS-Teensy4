@@ -191,6 +191,50 @@ static uint8_t portFreeRTOSSchedulerStarted = 0;
 	 static const volatile uint8_t * const pcInterruptPriorityRegisters = ( const volatile uint8_t * const ) portNVIC_IP_REGISTERS_OFFSET_16;
 #endif /* configASSERT_DEFINED */
 
+#if configGENERATE_RUN_TIME_STATS == 1
+
+volatile uint64_t ulTimerCounter;
+static void vPortRuntimeTimerCallback() {
+	FLEXPWM2_SM2STS = FLEXPWM_SMSTS_RF;
+	ulTimerCounter += 1;
+	return;
+}
+
+void vPortSetupRuntimeTimer() {
+	uint32_t period = (float)F_BUS_ACTUAL * (float)(100000/configTICK_RATE_HZ) * 0.0000005f;
+	uint32_t prescale = 0;
+	while (period > 32767) {
+		period = period >> 1;
+		if (++prescale > 7) {
+			prescale = 7;	// when F_BUS is 150 MHz, longest
+			period = 32767; // period is 55922 us (~17.9 Hz)
+			break;
+		}
+	}
+	FLEXPWM2_FCTRL0 |= FLEXPWM_FCTRL0_FLVL(4); // logic high = fault
+	FLEXPWM2_FSTS0 = 0x0008; // clear fault status
+	FLEXPWM2_MCTRL |= FLEXPWM_MCTRL_CLDOK(4);
+	FLEXPWM2_SM2CTRL2 = FLEXPWM_SMCTRL2_INDEP;
+	FLEXPWM2_SM2CTRL = FLEXPWM_SMCTRL_HALF | FLEXPWM_SMCTRL_PRSC(prescale);
+	FLEXPWM2_SM2INIT = -period;
+	FLEXPWM2_SM2VAL0 = 0;
+	FLEXPWM2_SM2VAL1 = period;
+	FLEXPWM2_SM2VAL2 = 0;
+	FLEXPWM2_SM2VAL3 = 0;
+	FLEXPWM2_SM2VAL4 = 0;
+	FLEXPWM2_SM2VAL5 = 0;
+	FLEXPWM2_MCTRL |= FLEXPWM_MCTRL_LDOK(4);
+	FLEXPWM2_MCTRL &= ~FLEXPWM_MCTRL_RUN(4);
+	attachInterruptVector(IRQ_FLEXPWM2_2, &vPortRuntimeTimerCallback);
+	FLEXPWM2_SM2STS = FLEXPWM_SMSTS_RF;
+	FLEXPWM2_SM2INTEN = FLEXPWM_SMINTEN_RIE;
+ 	NVIC_ENABLE_IRQ(IRQ_FLEXPWM2_2);
+	FLEXPWM2_MCTRL |= FLEXPWM_MCTRL_RUN(4);
+}
+
+#endif
+
+
 /*-----------------------------------------------------------*/
 
 /*

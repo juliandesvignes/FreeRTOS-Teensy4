@@ -17,6 +17,12 @@ The default configuration is in `FreeRTOSConfig_Default.h`.
 You can specify your own by having an include file named `Teensy4FreeRTOSConfig.h`,
 or you can add/replace to the default one by having an include file named `Teensy4FreeRTOSConfig_addition.h`.
 
+### Run-time stats
+
+Activating run-time stats (`configGENERATE_RUN_TIME_STATS`) configures Timer3, this will affect the PWM on pins 6, 7, 8 and 9. Please avoid using them when using run-time stats as it might cause conflict.
+
+If you still want to use them as PWM, please look at [this library](https://github.com/PaulStoffregen/TimerThree) and mimick its actions for configuring the PWM without touching the timer.
+
 ### For PlatformIO users
 
 The way PlatformIO works makes it impossible to load a configuration header in a system-level library.
