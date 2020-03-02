@@ -193,7 +193,7 @@ static uint8_t portFreeRTOSSchedulerStarted = 0;
 
 #if configGENERATE_RUN_TIME_STATS == 1
 
-extern volatile uint64_t ulTimerCounter;
+volatile uint64_t ulTimerCounter;
 static void vPortRuntimeTimerCallback() {
 	FLEXPWM2_SM2STS = FLEXPWM_SMSTS_RF;
 	ulTimerCounter += 1;

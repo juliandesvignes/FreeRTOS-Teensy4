@@ -15,7 +15,7 @@
 #endif
 
 #if configGENERATE_RUN_TIME_STATS == 1
-volatile uint64_t ulTimerCounter;
+extern volatile uint64_t ulTimerCounter;
 extern void vPortSetupRuntimeTimer();
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vPortSetupRuntimeTimer()
 #define portGET_RUN_TIME_COUNTER_VALUE() ulTimerCounter 
